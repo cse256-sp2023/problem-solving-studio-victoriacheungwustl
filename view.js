@@ -1,5 +1,44 @@
 // ---- Define your dialogs  and panels here ----
+let new_effective_permissions_result = define_new_effective_permissions("new_panel", true);
+$('#sidepanel').append(new_effective_permissions_result);
 
+//add an interface element to allow us to select a user.
+let new_user_select_result = define_new_user_select_field("new_user_select", "Select User", function (selected_user) {
+    //Connect the user selector and the effective permissions
+    $('#new_panel').attr('filepath', '/C/presentation_documents/important_file.txt');
+    $('#new_panel').attr('username', selected_user);
+});
+$('#sidepanel').append(new_user_select_result);
+
+//Define a single dialog (Step 1)
+let new_blank_dialog = define_new_dialog("my_dialog", "My Dialog Title");
+//Open the dialog on click
+$('.perm_info').click(function () { //select class of the info icons (perm_info)
+    //stuff that should happen on click goes here
+    console.log('clicked!');
+    new_blank_dialog.dialog('open');
+    //get the current username, filepath and permission
+    console.log($('#new_panel').attr('filepath'));
+    console.log($('#new_panel').attr('username'));
+    console.log($(this).attr('permission_name'));
+
+    // //Step 4: Get and display explanation
+    let my_filename_var = $('#new_panel').attr('filepath');
+    let my_username_var = $('#new_panel').attr('username');
+    let my_file_object_var = path_to_file[my_filename_var];
+    let my_user_object_var = all_users[my_username_var];
+    let permission_to_check = $(this).attr('permission_name')
+
+    let explanation_object = allow_user_action(my_file_object_var, my_user_object_var, permission_to_check, true);
+
+    //go from explanation object to string of readable text 
+    let explanation_text = get_explanation_text(explanation_object);
+    console.log(explanation_text);
+
+    //add the explanation to the dialog you just opened
+    $('#my_dialog').empty(); 
+    $('#my_dialog').append(explanation_text); 
+})
 
 
 // ---- Display file structure ----
@@ -8,7 +47,7 @@
 function make_file_element(file_obj) {
     let file_hash = get_full_path(file_obj)
 
-    if(file_obj.is_folder) {
+    if (file_obj.is_folder) {
         let folder_elem = $(`<div class='folder' id="${file_hash}_div">
             <h3 id="${file_hash}_header">
                 <span class="oi oi-folder" id="${file_hash}_icon"/> ${file_obj.filename} 
@@ -19,10 +58,10 @@ function make_file_element(file_obj) {
         </div>`)
 
         // append children, if any:
-        if( file_hash in parent_to_children) {
+        if (file_hash in parent_to_children) {
             let container_elem = $("<div class='folder_contents'></div>")
             folder_elem.append(container_elem)
-            for(child_file of parent_to_children[file_hash]) {
+            for (child_file of parent_to_children[file_hash]) {
                 let child_elem = make_file_element(child_file)
                 container_elem.append(child_elem)
             }
@@ -39,9 +78,9 @@ function make_file_element(file_obj) {
     }
 }
 
-for(let root_file of root_files) {
+for (let root_file of root_files) {
     let file_elem = make_file_element(root_file)
-    $( "#filestructure" ).append( file_elem);    
+    $("#filestructure").append(file_elem);
 }
 
 
@@ -56,7 +95,7 @@ $('.folder').accordion({
 // -- Connect File Structure lock buttons to the permission dialog --
 
 // open permissions dialog when a permission button is clicked
-$('.permbutton').click( function( e ) {
+$('.permbutton').click(function (e) {
     // Set the path and open dialog:
     let path = e.currentTarget.getAttribute('path');
     perm_dialog.attr('filepath', path)
@@ -66,7 +105,7 @@ $('.permbutton').click( function( e ) {
     // Deal with the fact that folders try to collapse/expand when you click on their permissions button:
     e.stopPropagation() // don't propagate button click to element underneath it (e.g. folder accordion)
     // Emit a click for logging purposes:
-    emitter.dispatchEvent(new CustomEvent('userEvent', { detail: new ClickEntry(ActionEnum.CLICK, (e.clientX + window.pageXOffset), (e.clientY + window.pageYOffset), e.target.id,new Date().getTime()) }))
+    emitter.dispatchEvent(new CustomEvent('userEvent', { detail: new ClickEntry(ActionEnum.CLICK, (e.clientX + window.pageXOffset), (e.clientY + window.pageYOffset), e.target.id, new Date().getTime()) }))
 });
 
 
